@@ -1,0 +1,168 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Bright, energetic palette — coral / amber / cobalt / teal on warm cream */
+    --background: 35 100% 97%;
+    --foreground: 222 47% 13%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 13%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 13%;
+    --primary: 14 94% 55%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 26 100% 93%;
+    --secondary-foreground: 20 80% 30%;
+    --muted: 30 60% 94%;
+    --muted-foreground: 24 14% 42%;
+    --accent: 214 92% 52%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 78% 55%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 28 60% 89%;
+    --input: 28 60% 89%;
+    --ring: 14 94% 55%;
+    --radius: 1.1rem;
+
+    /* extended brand tokens (used inline via hsl(var(--x))) */
+    --brand-coral: 14 94% 55%;
+    --brand-amber: 38 96% 50%;
+    --brand-cobalt: 214 92% 52%;
+    --brand-teal: 168 80% 36%;
+    --brand-violet: 262 80% 60%;
+    --brand-ink: 222 47% 13%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: ui-rounded, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    overscroll-behavior-y: none;
+  }
+}
+
+@layer utilities {
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+/* ─── Bright surface system ─── */
+.glass {
+  background: #ffffff;
+  border: 1px solid hsl(28 60% 89%);
+  box-shadow: 0 1px 2px hsl(20 60% 40% / 0.05), 0 8px 24px -12px hsl(20 60% 40% / 0.18);
+}
+
+.card-hover {
+  transition: transform 0.15s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.card-hover:active {
+  transform: scale(0.985);
+}
+
+/* lively brand gradients */
+.grad-hero {
+  background: linear-gradient(120deg, hsl(14 94% 55%) 0%, hsl(28 96% 52%) 55%, hsl(38 96% 50%) 100%);
+}
+.grad-coral-soft {
+  background: linear-gradient(135deg, hsl(14 94% 55% / 0.12), hsl(38 96% 50% / 0.14));
+}
+.grad-blue {
+  background: linear-gradient(120deg, hsl(214 92% 52%), hsl(190 85% 42%));
+}
+.grad-violet {
+  background: linear-gradient(120deg, hsl(262 80% 60%), hsl(300 70% 55%));
+}
+.grad-teal {
+  background: linear-gradient(120deg, hsl(168 80% 36%), hsl(150 85% 38%));
+}
+.grad-sleep {
+  background: linear-gradient(120deg, hsl(262 80% 62%), hsl(214 92% 60%));
+}
+.grad-amber {
+  background: linear-gradient(120deg, hsl(38 96% 50%), hsl(24 95% 55%));
+}
+
+.text-grad-fire {
+  background: linear-gradient(100deg, hsl(14 94% 55%), hsl(38 96% 48%));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* hero image banner */
+.hero-img {
+  border-radius: 1.25rem;
+  overflow: hidden;
+  position: relative;
+  border: 1px solid hsl(28 60% 89%);
+  box-shadow: 0 2px 4px hsl(20 60% 40% / 0.06), 0 12px 28px -12px hsl(20 60% 40% / 0.22);
+}
+.hero-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-in {
+  animation: fadeSlideUp 0.35s ease both;
+}
+
+@keyframes pulseSoft {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+.pulse-soft {
+  animation: pulseSoft 2.2s ease-in-out infinite;
+}
+
+@keyframes ringPulse {
+  0% {
+    box-shadow: 0 0 0 0 hsl(14 94% 55% / 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 14px hsl(14 94% 55% / 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 hsl(14 94% 55% / 0);
+  }
+}
+.ring-pulse {
+  animation: ringPulse 2s ease-out infinite;
+}
