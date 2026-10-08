@@ -166,3 +166,8 @@
 .ring-pulse {
   animation: ringPulse 2s ease-out infinite;
 }
+
+/* hide the hosting platform's floating badge (plain DOM, light scope) */
+.kimi-brand-container {
+  display: none !important;
+}

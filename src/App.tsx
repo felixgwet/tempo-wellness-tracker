@@ -7,7 +7,7 @@ import Train from './screens/Train';
 import Sleep from './screens/Sleep';
 import Fuel from './screens/Fuel';
 import Mind from './screens/Mind';
-import { Card, PrimaryButton, Input, Label } from './components/bits';
+import { Card, Input, Label } from './components/bits';
 
 export type Tab = 'today' | 'train' | 'sleep' | 'fuel' | 'mind';
 
@@ -204,6 +204,19 @@ function SettingsSheet({ onClose, onNotif }: { onClose: () => void; onNotif: (en
   const { state, dispatch } = useStore();
   const [weight, setWeight] = useState(String(state.settings.weightKg));
 
+  // saves as you type (valid range) or via the ± steppers — no separate Save button
+  const commitWeight = (v: number) => {
+    const w = Math.min(300, Math.max(30, Math.round(v)));
+    setWeight(String(w));
+    if (w !== state.settings.weightKg) dispatch({ type: 'setWeight', weightKg: w });
+  };
+  const onWeightType = (v: string) => {
+    setWeight(v);
+    const n = Number(v);
+    if (Number.isFinite(n) && n >= 30 && n <= 300) dispatch({ type: 'setWeight', weightKg: n });
+  };
+  const weightSaved = Number(weight) === state.settings.weightKg && Number(weight) >= 30;
+
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center" onClick={onClose}>
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
@@ -218,16 +231,28 @@ function SettingsSheet({ onClose, onNotif }: { onClose: () => void; onNotif: (en
 
         <div className="space-y-5">
           <div>
-            <Label>Body weight (kg) — used for calorie estimates</Label>
-            <div className="flex gap-2">
-              <Input type="number" inputMode="decimal" value={weight} onChange={(e) => setWeight(e.target.value)} />
-              <PrimaryButton
-                className="w-auto px-5"
-                onClick={() => dispatch({ type: 'setWeight', weightKg: Math.max(30, Number(weight) || 75) })}
-              >
-                Save
-              </PrimaryButton>
+            <div className="flex items-center justify-between mb-1.5">
+              <Label>Body weight (kg)</Label>
+              {weightSaved && <span className="text-[10px] font-bold text-emerald-600">✓ saved</span>}
             </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => commitWeight((Number(weight) || state.settings.weightKg) - 1)}
+                className="w-11 rounded-xl bg-muted/70 text-lg font-bold active:scale-[0.94] transition-transform"
+                aria-label="1 kg less"
+              >
+                −
+              </button>
+              <Input type="number" inputMode="decimal" value={weight} onChange={(e) => onWeightType(e.target.value)} />
+              <button
+                onClick={() => commitWeight((Number(weight) || state.settings.weightKg) + 1)}
+                className="w-11 rounded-xl bg-muted/70 text-lg font-bold active:scale-[0.94] transition-transform"
+                aria-label="1 kg more"
+              >
+                +
+              </button>
+            </div>
+            <p className="text-[10px] text-muted-foreground mt-1.5">Used for workout calorie estimates. Saves as you type or tap ± — no Save button needed.</p>
           </div>
 
           <div>

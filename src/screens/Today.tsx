@@ -114,6 +114,11 @@ export default function Today({ go }: { go: (t: Tab) => void }) {
         <h1 className="text-2xl font-bold tracking-tight mt-0.5">{greeting}.</h1>
       </div>
 
+      {/* Brand banner */}
+      <div className="hero-img mb-3" style={{ height: 140 }}>
+        <img src="/banner.png" alt="Tempo — Body & Mind" />
+      </div>
+
       {/* Motivation line */}
       <Card className="mb-3 grad-coral-soft border-primary/20">
         <div className="flex gap-2.5 items-start">
