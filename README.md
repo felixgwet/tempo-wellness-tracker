@@ -20,16 +20,31 @@ Streaks were deliberately left out. They gamify missing a day into "losing every
 |---|---|
 | **Today** | Greeting, motivation line picked from your actual state, status chips, illustrated quick-nav, weekly summary, milestone celebrations |
 | **Train** | Weekly program (from my own workout PDF), live gym timer, per-exercise sets/reps/weight logging with last-weight prefill, stats (avg duration, weekly frequency, ~kcal), 14-day chart, history |
-| **Sleep** | Hours + perceived-rest logging, instant full verdict card per entry (pros/cons of that duration), research-graded reference bands, sleep tips |
-| **Hydrate** | One-tap glass counter, adjustable daily target, progress ring, 14-day chart, hydration benefits/drawbacks lists |
+| **Sleep** | Tap-to-sleep timer ("going to bed" → "I woke up", rounded to the nearest 10 min), manual hours + perceived-rest logging, instant full verdict card per entry (pros/cons of that duration), research-graded reference bands, sleep tips |
+| **Fuel** | Water in ml/oz (quick-add chips + custom amounts, adjustable daily target, progress ring, 14-day chart) **and running** (minutes, optional distance, presets, run history, 14-day chart) — with benefits/drawbacks lists for both |
 | **Mind** | Meditation / reading / chess check-ins with minutes, style/type, per-category reading benefits, chess gap warnings that escalate to a "drawbacks getting severe" alert |
 
 Cross-cutting:
 
 - **Motivation engine** — encouraging copy chosen from the user's real state, plus one-time milestone celebrations (frequency-based, never streaks)
 - **Reminder engine** — in-app banners checked every 30 s against user-set times for gym, meditation, reading, chess, hydration and sleep-logging; escalates chess gaps
+- **Unit switching** — metric (ml · km) or imperial (oz · mi) in Settings; distances are normalised to km internally and converted at the display layer
 - **Web push** — service worker + Push API; notifications fire while the app is open everywhere, and as true push once installed to the Home Screen (iOS 16.4+)
 - **PWA** — installable, offline shell cache, custom icon set, deep-linkable tabs (`#train`, `#sleep`…)
+
+## Changelog
+
+### v2 — Fuel, running & smarter logging
+- **Hydrate tab renamed to Fuel** and now covers water *and* running.
+- **Water is tracked in ml/oz directly** — the "glass" metaphor is gone. Quick-add chips (+250 / +500 / +750), custom amounts, and a daily target in ml (default 2 400). Old glass-based data is converted automatically on first load.
+- **Running log** — minutes (with 15/30/45/60 presets), optional distance, note; totals for runs, time and distance; 14-day minutes chart; deleteable history. Run frequency milestones (3+/6+ runs per 7 days) join the motivation engine.
+- **Total gym time** — Train stats now include the all-time sum of every logged session (Xh Ym).
+- **Tap-to-sleep** — tap "I'm going to sleep" when you get in bed and "I woke up" in the morning; the night is logged rounded to the nearest 10 minutes (±10 min accuracy shown in the entry). Survives app restarts overnight via a separate localStorage key. Manual entry is still there.
+- **Metric / imperial switch** in Settings (ml·km vs oz·mi), applied app-wide.
+- Service-worker cache bumped to `tempo-v2` so installed phones pick up the new build.
+
+### v1 — Initial release
+- Five zones (Today, Train, Sleep, Hydrate, Mind), motivation engine, reminder engine, web push, PWA install.
 
 ## Tech stack
 
@@ -55,8 +70,8 @@ src/
 └── screens/
     ├── Today.tsx      # Dashboard + motivation engine
     ├── Train.tsx      # Timer + exercise logging + stats
-    ├── Sleep.tsx      # Sleep logging + verdicts
-    ├── Hydrate.tsx    # Water counter + target
+    ├── Sleep.tsx      # Tap-to-sleep timer + manual logging + verdicts
+    ├── Fuel.tsx       # Water in ml/oz + running log
     └── Mind.tsx       # Meditation / reading / chess
 ```
 

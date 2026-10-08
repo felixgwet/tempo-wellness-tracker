@@ -1,12 +1,20 @@
-import { useMemo, useState } from 'react';
-import { MoonStar, Trash2, Lightbulb, BedDouble } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { MoonStar, Trash2, Lightbulb, BedDouble, AlarmClockCheck } from 'lucide-react';
 import { useStore, todayISO, dateISO, notify } from '../lib/store';
 import { SLEEP_BANDS, SLEEP_TIPS } from '../lib/data';
 import type { SleepLog } from '../types';
-import { Card, SectionTitle, Stat, Pill, PrimaryButton, Input, Label, EmptyState, MiniBars, HeroBanner, ProCon } from '../components/bits';
+import { Card, SectionTitle, Stat, Pill, PrimaryButton, GhostButton, Input, Label, EmptyState, MiniBars, HeroBanner, ProCon } from '../components/bits';
+
+const SLEEP_START_KEY = 'tempo-sleep-start';
 
 function bandFor(hours: number) {
   return SLEEP_BANDS.find((b) => hours < b.max)!;
+}
+
+function fmtHM(minutes: number) {
+  const h = Math.floor(minutes / 60);
+  const m = Math.round(minutes % 60);
+  return `${h}h ${String(m).padStart(2, '0')}m`;
 }
 
 export default function Sleep() {
@@ -14,6 +22,19 @@ export default function Sleep() {
   const [date, setDate] = useState(todayISO());
   const [hours, setHours] = useState('7.5');
   const [quality, setQuality] = useState<SleepLog['quality']>(3);
+  // tap-to-sleep: pending bedtime stored locally so it survives app restarts overnight
+  const [sleepStart, setSleepStart] = useState<number | null>(() => {
+    const raw = localStorage.getItem(SLEEP_START_KEY);
+    const t = raw ? Number(raw) : NaN;
+    return Number.isFinite(t) && t > 0 ? t : null;
+  });
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    if (!sleepStart) return;
+    const t = window.setInterval(() => setNow(Date.now()), 30000);
+    return () => window.clearInterval(t);
+  }, [sleepStart]);
 
   const logs = state.sleepLogs;
   const avg = logs.length ? logs.reduce((a, l) => a + l.hours, 0) / logs.length : 0;
@@ -34,12 +55,79 @@ export default function Sleep() {
   const lastNight = logs.find((l) => l.dateISO === todayISO()) || sorted[0];
   const lastBand = lastNight ? bandFor(lastNight.hours) : null;
 
+  const goToBed = () => {
+    const t = Date.now();
+    localStorage.setItem(SLEEP_START_KEY, String(t));
+    setSleepStart(t);
+    setNow(Date.now());
+  };
+
+  const wakeUp = () => {
+    if (!sleepStart) return;
+    const wake = Date.now();
+    // give or take ~10 minutes: round the elapsed time to the nearest 10 min
+    const elapsedMin = (wake - sleepStart) / 60000;
+    const roundedMin = Math.max(10, Math.round(elapsedMin / 10) * 10);
+    const h = Math.round((roundedMin / 60) * 10) / 10;
+    localStorage.removeItem(SLEEP_START_KEY);
+    setSleepStart(null);
+    dispatch({
+      type: 'addSleep',
+      log: { dateISO: todayISO(), hours: h, quality, note: `Bed ${new Date(sleepStart).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} → wake ${new Date(wake).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} (±10 min)` },
+    });
+    const b = bandFor(h);
+    if (b.tone === 'good') notify('Sleep logged 🌙', `${h}h — right in the optimal zone.`);
+    else notify('Sleep logged 🌙', `${h}h — aim for 7–9h tonight.`);
+  };
+
+  const sleptAlready = sleepStart ? Math.max(0, (now - sleepStart) / 60000) : 0;
+
   return (
     <div className="px-4 pt-2 pb-28 space-y-1">
       <HeroBanner src="/hero-sleep.jpg" alt="Sleep illustration" height={130} />
 
+      {/* Tap-to-sleep timer */}
       <Card className="mt-3">
-        <p className="text-xs font-bold text-foreground/90 mb-3">Log last night's sleep</p>
+        {!sleepStart ? (
+          <div className="flex flex-col items-center py-1">
+            <div className="w-14 h-14 rounded-2xl grad-sleep flex items-center justify-center mb-3">
+              <BedDouble className="text-white" size={26} />
+            </div>
+            <p className="text-sm font-bold">Going to bed now?</p>
+            <p className="text-xs text-muted-foreground mt-1 mb-4 text-center">Tap when you get in bed — tap again when you wake up.<br />Logged to the nearest 10 minutes.</p>
+            <div className="w-full">
+              <Label>How rested do you feel (right after waking)?</Label>
+              <div className="flex gap-2 mb-3">
+                {([1, 2, 3, 4, 5] as const).map((q) => (
+                  <button
+                    key={q}
+                    onClick={() => setQuality(q)}
+                    className={`flex-1 rounded-xl py-2.5 text-sm font-bold border transition-colors ${
+                      quality === q ? 'grad-hero text-white border-transparent shadow-[0_4px_12px_-4px_hsl(14_94%_55%/0.6)]' : 'bg-muted/60 border-border text-muted-foreground'
+                    }`}
+                  >
+                    {q}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <PrimaryButton className="ring-pulse" onClick={goToBed}>I'm going to sleep</PrimaryButton>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center">
+            <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-bold">Sleeping since {new Date(sleepStart).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+            <p className="text-4xl font-bold tabular-nums my-3 tracking-tight text-violet-600">{fmtHM(sleptAlready)}</p>
+            <p className="text-xs text-muted-foreground mb-4 text-center">So far tonight. Rest counts from the moment you tapped.<br />Wake time is rounded to the nearest 10 minutes.</p>
+            <div className="flex gap-2 w-full">
+              <GhostButton onClick={() => { localStorage.removeItem(SLEEP_START_KEY); setSleepStart(null); }}>Cancel</GhostButton>
+              <PrimaryButton onClick={wakeUp}><span className="flex items-center justify-center gap-2"><AlarmClockCheck size={16} /> I woke up</span></PrimaryButton>
+            </div>
+          </div>
+        )}
+      </Card>
+
+      <Card className="mt-3">
+        <p className="text-xs font-bold text-foreground/90 mb-3">Log last night's sleep manually</p>
         <div className="space-y-3">
           <div>
             <Label>Date (day you woke up)</Label>

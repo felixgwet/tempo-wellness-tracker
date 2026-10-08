@@ -183,8 +183,19 @@ export const SLEEP_TIPS = [
   'If you can\'t sleep after ~20 minutes, get up, do something calm in dim light, and retry.',
 ];
 
-// ─── Hydration ───
-export const GLASS_ML = 300; // one "glass" ≈ 300 ml
+// ─── Hydration & running ───
+export const ML_PER_OZ = 29.5735;
+export const KM_PER_MI = 1.60934;
+
+/** Format a water volume in the user's units. */
+export function fmtWater(ml: number, units: 'metric' | 'imperial'): string {
+  return units === 'metric' ? `${Math.round(ml)} ml` : `${Math.round(ml / ML_PER_OZ)} oz`;
+}
+
+/** Format a distance in the user's units. */
+export function fmtDist(km: number, units: 'metric' | 'imperial'): string {
+  return units === 'metric' ? `${km.toFixed(1)} km` : `${(km / KM_PER_MI).toFixed(1)} mi`;
+}
 
 export const WATER_BENEFITS = [
   'Even mild dehydration (1–2% of body weight) measurably reduces concentration, memory and reaction time — staying topped up keeps your brain online',
@@ -207,16 +218,44 @@ export const WATER_SKIP_COSTS = [
 ];
 
 export const WATER_TIPS = [
-  'Front-load the day: 1–2 glasses right after waking restarts your fluid balance after sleep.',
+  'Front-load the day: 500 ml right after waking restarts your fluid balance after sleep.',
   'Keep a bottle where you train and sip between sets, not just when you feel thirsty.',
   'Urine color is the simplest gauge — pale straw means well hydrated.',
   'Caffeine and alcohol both increase fluid needs; add a glass per coffee or drink.',
-  'Hot days and hard sessions each add roughly 2+ glasses to your baseline.',
-  'Attach a glass to existing habits: after brushing teeth, before each meal, when you log a workout.',
+  'Hot days and hard sessions each add roughly 500–750 ml to your baseline.',
+  'Attach drinking to existing habits: after brushing teeth, before each meal, when you log a workout.',
 ];
 
 export const WATER_REMINDER_NOTE =
   'Reminder fires daily at the time you set in Settings — hydration slips in the afternoon, so that\'s a good slot.';
+
+// ─── Running ───
+export const RUN_BENEFITS = [
+  'Running is one of the most efficient cardio engines: ~10 kcal per minute at a steady pace, more than almost any gym session per minute',
+  'Zone-2 easy running builds your aerobic base — better stamina for lifting, sports and everyday energy',
+  'Regular running lowers resting heart rate and blood pressure within weeks (classic cardiovascular adaptation)',
+  'It burns visceral fat specifically — the metabolically dangerous kind around your organs',
+  'Runner\'s high is real: steady-state cardio reliably releases endocannabinoids and endorphins',
+  'Impact loading from running actually strengthens bone density — a perfect complement to lifting',
+  'Just 10 minutes of light running measurably improves mood and focus for hours afterwards',
+  'Consistent runners report falling asleep faster and sleeping deeper — cardio debt is a natural sleep aid',
+];
+
+export const RUN_SKIP_COSTS = [
+  'Aerobic fitness decays fast: measurable VO₂max decline begins within ~10–14 days off',
+  'That easy-run stamina you built fades to baseline in about a month of stopping',
+  'Skipping cardio leaves lifting as your only stimulus — heart health and recovery pace both lose a gear',
+  'The mood-boost and mental-clearance effect of a run disappears with it — often within days',
+  'Returning after a long gap feels disproportionately hard: runs that were easy feel like a slog, which discourages the restart',
+];
+
+export const RUN_TIPS = [
+  'Most of your running should feel easy — if you can\'t hold a conversation, slow down.',
+  '2–3 runs a week is plenty alongside lifting; more volume needs rest days between.',
+  'Log distance only when you know it — minutes alone are a perfectly good metric.',
+  'Five minutes of running beats zero. Short counts.',
+  'A loop from your front door removes the "get to a track" excuse entirely.',
+];
 
 // ─── Meditation ───
 export const MEDITATION_BENEFITS = [
@@ -395,6 +434,8 @@ export const CONGRATS_MESSAGES: Record<string, string> = {
   'chess-3': 'Chess 3+ days this week — your pattern recognition and calculation are sharpening daily.',
   'chess-6': 'Chess 6+ days this week — working-memory training in disguise. The board is your second gym.',
   'water-week': 'Target hit every day this week — hydration on autopilot. Your brain, joints and recovery all run on that water.',
+  'run-3': '3+ runs in the last 7 days — your aerobic base is compounding. Easy miles now, endless energy later.',
+  'run-6': '6+ runs in 7 days — engine-building territory. Your heart, lungs and mood are all thanking you.',
 };
 
 /** Encouraging lines shown on the Today screen, picked by current state. */

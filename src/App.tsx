@@ -1,21 +1,21 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { LayoutDashboard, Dumbbell, MoonStar, Droplets, Brain, Settings as SettingsIcon, X, Bell, BellOff, Share, Info, Activity } from 'lucide-react';
+import { LayoutDashboard, Dumbbell, MoonStar, Flame, Brain, Settings as SettingsIcon, X, Bell, BellOff, Share, Info, Activity } from 'lucide-react';
 import { StoreProvider, useStore, todayISO, notify } from './lib/store';
-import { WEEKLY_PLAN, GLASS_ML } from './lib/data';
+import { WEEKLY_PLAN, fmtWater } from './lib/data';
 import Today from './screens/Today';
 import Train from './screens/Train';
 import Sleep from './screens/Sleep';
-import Hydrate from './screens/Hydrate';
+import Fuel from './screens/Fuel';
 import Mind from './screens/Mind';
 import { Card, PrimaryButton, Input, Label } from './components/bits';
 
-export type Tab = 'today' | 'train' | 'sleep' | 'hydrate' | 'mind';
+export type Tab = 'today' | 'train' | 'sleep' | 'fuel' | 'mind';
 
 const TABS: { id: Tab; label: string; icon: React.ElementType }[] = [
   { id: 'today', label: 'Today', icon: LayoutDashboard },
   { id: 'train', label: 'Train', icon: Dumbbell },
   { id: 'sleep', label: 'Sleep', icon: MoonStar },
-  { id: 'hydrate', label: 'Hydrate', icon: Droplets },
+  { id: 'fuel', label: 'Fuel', icon: Flame },
   { id: 'mind', label: 'Mind', icon: Brain },
 ];
 
@@ -30,7 +30,7 @@ interface Alert {
 function Shell() {
   const [tab, setTabState] = useState<Tab>(() => {
     const h = window.location.hash.slice(1);
-    return (['today', 'train', 'sleep', 'hydrate', 'mind'] as Tab[]).includes(h as Tab) ? (h as Tab) : 'today';
+    return (['today', 'train', 'sleep', 'fuel', 'mind'] as Tab[]).includes(h as Tab) ? (h as Tab) : 'today';
   });
   const setTab = (t: Tab) => {
     setTabState(t);
@@ -91,9 +91,9 @@ function Shell() {
       push(`sleep-${today}`, 'Wind down soon 🌙', "Log last night's sleep, then aim for 7–9h. Recovery is training.", 'sleep');
     }
     // Water
-    const waterToday = state.waterLogs.filter((l) => l.dateISO === today).reduce((a, l) => a + l.glasses, 0);
+    const waterToday = state.waterLogs.filter((l) => l.dateISO === today).reduce((a, l) => a + (l.ml || 0), 0);
     if (waterToday < state.settings.waterTarget && hm >= r.water) {
-      push(`water-${today}`, 'Hydration check 💧', `You're at ${waterToday}/${state.settings.waterTarget} glasses (~${waterToday * GLASS_ML} ml). A glass now beats catch-up later.`, 'hydrate');
+      push(`water-${today}`, 'Hydration check 💧', `You're at ${fmtWater(waterToday, state.settings.units)} of ${fmtWater(state.settings.waterTarget, state.settings.units)}. A drink now beats catch-up later.`, 'fuel');
     }
     return out.slice(0, 2);
   }, [now, state]);
@@ -174,7 +174,7 @@ function Shell() {
         {tab === 'today' && <Today go={setTab} />}
         {tab === 'train' && <Train />}
         {tab === 'sleep' && <Sleep />}
-        {tab === 'hydrate' && <Hydrate />}
+        {tab === 'fuel' && <Fuel />}
         {tab === 'mind' && <Mind />}
       </main>
 
@@ -228,6 +228,24 @@ function SettingsSheet({ onClose, onNotif }: { onClose: () => void; onNotif: (en
                 Save
               </PrimaryButton>
             </div>
+          </div>
+
+          <div>
+            <Label>Measurements</Label>
+            <div className="flex gap-2">
+              {(['metric', 'imperial'] as const).map((u) => (
+                <button
+                  key={u}
+                  onClick={() => dispatch({ type: 'setUnits', units: u })}
+                  className={`flex-1 rounded-xl py-2.5 text-sm font-bold border transition-colors ${
+                    state.settings.units === u ? 'grad-blue text-white border-transparent' : 'bg-muted/60 border-border text-muted-foreground'
+                  }`}
+                >
+                  {u === 'metric' ? 'Metric (ml · km)' : 'Imperial (oz · mi)'}
+                </button>
+              ))}
+            </div>
+            <p className="text-[10px] text-muted-foreground mt-1.5">Applies to water volumes and run distances across the app.</p>
           </div>
 
           <div>

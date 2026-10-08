@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react';
-import { Dumbbell, MoonStar, Droplets, Brain, BookOpen, Crown, ChevronRight, Trophy, AlertTriangle, Sparkles } from 'lucide-react';
-import { useStore, todayISO, dateISO, daysSinceLatest, countInLastDays, glassesOn, lastWeekSessions } from '../lib/store';
-import { WEEKLY_PLAN, SLEEP_BANDS, CONGRATS_MESSAGES, MOTIVATION_LINES } from '../lib/data';
+import { Dumbbell, MoonStar, Flame, Brain, BookOpen, Crown, ChevronRight, Trophy, AlertTriangle, Sparkles } from 'lucide-react';
+import { useStore, todayISO, dateISO, daysSinceLatest, countInLastDays, mlOn, lastWeekSessions } from '../lib/store';
+import { WEEKLY_PLAN, SLEEP_BANDS, CONGRATS_MESSAGES, MOTIVATION_LINES, fmtWater } from '../lib/data';
 import { Card, SectionTitle, Pill } from '../components/bits';
 import type { Tab } from '../App';
 
@@ -17,9 +17,11 @@ export default function Today({ go }: { go: (t: Tab) => void }) {
   const lastSleep = [...state.sleepLogs].sort((a, b) => (a.dateISO < b.dateISO ? 1 : -1))[0];
   const sleepBand = lastSleep ? SLEEP_BANDS.find((b) => lastSleep.hours < b.max) : null;
 
-  const waterToday = glassesOn(state.waterLogs, todayISO());
+  const waterToday = mlOn(state.waterLogs, todayISO());
   const waterTarget = state.settings.waterTarget;
   const waterMet = waterToday >= waterTarget;
+
+  const runWeek = countInLastDays(state.runLogs.map((r) => r.dateISO), 7);
 
   const medDates = state.meditationLogs.map((l) => l.dateISO);
   const readDates = state.readingLogs.map((l) => l.dateISO);
@@ -64,14 +66,16 @@ export default function Today({ go }: { go: (t: Tab) => void }) {
     else if (readWeek >= 3) keys.push('read-3');
     if (chessWeek >= 6) keys.push('chess-6');
     else if (chessWeek >= 3) keys.push('chess-3');
+    if (runWeek >= 6) keys.push('run-6');
+    else if (runWeek >= 3) keys.push('run-3');
     const weekLogs = state.sleepLogs.filter((l) => l.dateISO >= dateISO(new Date(Date.now() - 6 * 86400000)));
     if (weekLogs.length >= 5 && weekLogs.every((l) => l.hours >= 7 && l.hours <= 9)) keys.push('sleep-week-good');
     const waterDays = new Map<string, number>();
-    state.waterLogs.forEach((l) => waterDays.set(l.dateISO, (waterDays.get(l.dateISO) || 0) + l.glasses));
+    state.waterLogs.forEach((l) => waterDays.set(l.dateISO, (waterDays.get(l.dateISO) || 0) + l.ml));
     const weekWater = [...waterDays.entries()].filter(([d]) => d >= dateISO(new Date(Date.now() - 6 * 86400000)));
-    if (weekWater.length >= 5 && weekWater.every(([, g]) => g >= waterTarget)) keys.push('water-week');
+    if (weekWater.length >= 5 && weekWater.every(([, ml]) => ml >= waterTarget)) keys.push('water-week');
     return keys.filter((k) => !state.seenCongrats.includes(k) && CONGRATS_MESSAGES[k]);
-  }, [state, gymThisWeek, medWeek, readWeek, chessWeek, waterTarget]);
+  }, [state, gymThisWeek, medWeek, readWeek, chessWeek, runWeek, waterTarget]);
 
   // Celebrate, then mark as seen so each milestone fires once
   useEffect(() => {
@@ -97,7 +101,7 @@ export default function Today({ go }: { go: (t: Tab) => void }) {
   const statusChips = [
     { label: plan.rest ? 'Rest day' : doneToday ? 'Trained ✓' : 'Train', done: plan.rest || doneToday, tab: 'train' as Tab },
     { label: lastSleep && lastSleep.dateISO === todayISO() ? `${lastSleep.hours}h ✓` : 'Sleep', done: !!lastSleep && lastSleep.dateISO === todayISO(), tab: 'sleep' as Tab },
-    { label: waterMet ? 'Water ✓' : 'Water', done: waterMet, tab: 'hydrate' as Tab },
+    { label: waterMet ? 'Water ✓' : 'Water', done: waterMet, tab: 'fuel' as Tab },
     { label: medToday ? 'Meditated ✓' : 'Meditate', done: medToday, tab: 'mind' as Tab },
     { label: readToday ? 'Read ✓' : 'Read', done: readToday, tab: 'mind' as Tab },
     { label: chessToday ? 'Chess ✓' : 'Chess', done: chessToday, tab: 'mind' as Tab },
@@ -206,14 +210,14 @@ export default function Today({ go }: { go: (t: Tab) => void }) {
             </div>
           </div>
         </button>
-        <button onClick={() => go('hydrate')} className="text-left">
+        <button onClick={() => go('fuel')} className="text-left">
           <div className="hero-img h-28">
-            <img src="/hero-water.png" alt="Hydrate" />
+            <img src="/hero-water.png" alt="Fuel" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent flex items-end p-2.5">
               <div className="flex items-center gap-1.5 w-full">
-                <Droplets size={14} className="text-white" />
-                <span className="text-white text-xs font-bold">Hydrate</span>
-                <span className="ml-auto text-white/85 text-[10px] font-semibold">{waterToday}/{waterTarget} glasses</span>
+                <Flame size={14} className="text-white" />
+                <span className="text-white text-xs font-bold">Fuel</span>
+                <span className="ml-auto text-white/85 text-[10px] font-semibold">{fmtWater(waterToday, state.settings.units)}</span>
               </div>
             </div>
           </div>

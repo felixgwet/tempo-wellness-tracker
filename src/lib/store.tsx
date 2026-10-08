@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useMemo, useReducer } from 'react';
-import type { State, GymSession, SleepLog, WaterLog, MeditationLog, ReadingLog, ChessLog } from '../types';
+import type { State, GymSession, SleepLog, WaterLog, RunLog, MeditationLog, ReadingLog, ChessLog } from '../types';
 import { estimateCalories } from './data';
 
 const STORAGE_KEY = 'tempo-state-v1';
@@ -7,7 +7,8 @@ const STORAGE_KEY = 'tempo-state-v1';
 const DEFAULT_STATE: State = {
   settings: {
     weightKg: 75,
-    waterTarget: 8,
+    units: 'metric',
+    waterTarget: 2400,
     notifications: false,
     notifAsked: false,
     reminders: { gym: '17:00', meditate: '07:30', read: '21:30', chess: '16:00', water: '14:00', sleep: '22:30' },
@@ -15,6 +16,7 @@ const DEFAULT_STATE: State = {
   gymSessions: [],
   sleepLogs: [],
   waterLogs: [],
+  runLogs: [],
   meditationLogs: [],
   readingLogs: [],
   chessLogs: [],
@@ -29,10 +31,25 @@ function loadState(): State {
     if (!raw) return DEFAULT_STATE;
     const parsed = JSON.parse(raw);
     const { releases: _legacyReleases, ...rest } = parsed;
+    const s = parsed.settings || {};
+    // pre-v2 stored water target in "glasses" (< 50) — convert to ml
+    const waterTarget = typeof s.waterTarget === 'number' && s.waterTarget > 0 && s.waterTarget < 50 ? s.waterTarget * 300 : s.waterTarget;
+    // pre-v2 water logs counted glasses — convert to ml
+    const waterLogs: WaterLog[] = (rest.waterLogs || []).map((l: WaterLog & { glasses?: number }) => ({
+      ...l,
+      ml: typeof l.ml === 'number' ? l.ml : Math.round((l.glasses ?? 0) * 300),
+    }));
     return {
       ...DEFAULT_STATE,
       ...rest,
-      settings: { ...DEFAULT_STATE.settings, ...(parsed.settings || {}), reminders: { ...DEFAULT_STATE.settings.reminders, ...(parsed.settings?.reminders || {}) } },
+      waterLogs,
+      settings: {
+        ...DEFAULT_STATE.settings,
+        ...s,
+        waterTarget: typeof waterTarget === 'number' && waterTarget > 0 ? waterTarget : DEFAULT_STATE.settings.waterTarget,
+        units: s.units === 'imperial' ? 'imperial' : 'metric',
+        reminders: { ...DEFAULT_STATE.settings.reminders, ...(s.reminders || {}) },
+      },
     };
   } catch {
     return DEFAULT_STATE;
@@ -46,12 +63,15 @@ type Action =
   | { type: 'deleteSleep'; id: string }
   | { type: 'addWater'; log: Omit<WaterLog, 'id'> }
   | { type: 'deleteWater'; id: string }
+  | { type: 'addRun'; log: Omit<RunLog, 'id'> }
+  | { type: 'deleteRun'; id: string }
   | { type: 'addMeditation'; log: Omit<MeditationLog, 'id'> }
   | { type: 'addReading'; log: Omit<ReadingLog, 'id'> }
   | { type: 'addChess'; log: Omit<ChessLog, 'id'> }
   | { type: 'deleteLog'; habit: 'meditation' | 'reading' | 'chess'; id: string }
   | { type: 'setWeight'; weightKg: number }
-  | { type: 'setWaterTarget'; glasses: number }
+  | { type: 'setUnits'; units: 'metric' | 'imperial' }
+  | { type: 'setWaterTarget'; ml: number }
   | { type: 'setReminder'; habit: keyof State['settings']['reminders']; time: string }
   | { type: 'setNotifications'; enabled: boolean; asked: boolean }
   | { type: 'dismissAlert'; key: string; dateISO: string }
@@ -75,6 +95,10 @@ function reducer(state: State, action: Action): State {
       return { ...state, waterLogs: [{ ...action.log, id: uid() }, ...state.waterLogs] };
     case 'deleteWater':
       return { ...state, waterLogs: state.waterLogs.filter((l) => l.id !== action.id) };
+    case 'addRun':
+      return { ...state, runLogs: [{ ...action.log, id: uid() }, ...state.runLogs] };
+    case 'deleteRun':
+      return { ...state, runLogs: state.runLogs.filter((l) => l.id !== action.id) };
     case 'addMeditation':
       return { ...state, meditationLogs: [{ ...action.log, id: uid() }, ...state.meditationLogs] };
     case 'addReading':
@@ -88,8 +112,10 @@ function reducer(state: State, action: Action): State {
     }
     case 'setWeight':
       return { ...state, settings: { ...state.settings, weightKg: action.weightKg } };
+    case 'setUnits':
+      return { ...state, settings: { ...state.settings, units: action.units } };
     case 'setWaterTarget':
-      return { ...state, settings: { ...state.settings, waterTarget: Math.max(1, action.glasses) } };
+      return { ...state, settings: { ...state.settings, waterTarget: Math.max(250, action.ml) } };
     case 'setReminder':
       return { ...state, settings: { ...state.settings, reminders: { ...state.settings.reminders, [action.habit]: action.time } } };
     case 'setNotifications':
@@ -165,9 +191,9 @@ export function lastWeekSessions(sessions: GymSession[]): GymSession[] {
   return sessions.filter((s) => s.dateISO >= cutoff);
 }
 
-/** Total glasses logged for a given date. */
-export function glassesOn(logs: WaterLog[], date: string): number {
-  return logs.filter((l) => l.dateISO === date).reduce((a, l) => a + l.glasses, 0);
+/** Total ml logged for a given date. */
+export function mlOn(logs: WaterLog[], date: string): number {
+  return logs.filter((l) => l.dateISO === date).reduce((a, l) => a + (l.ml || 0), 0);
 }
 
 /**

@@ -1,5 +1,5 @@
-/* Forge service worker — PWA shell cache + web push support */
-const CACHE = 'tempo-v1';
+/* Tempo service worker — PWA shell cache + web push support */
+const CACHE = 'tempo-v2';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(

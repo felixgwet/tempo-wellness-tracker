@@ -37,7 +37,15 @@ export interface SleepLog {
 export interface WaterLog {
   id: string;
   dateISO: string;
-  glasses: number;
+  ml: number;
+}
+
+export interface RunLog {
+  id: string;
+  dateISO: string;
+  minutes: number;
+  distanceKm?: number;
+  note?: string;
 }
 
 export interface MeditationLog {
@@ -65,7 +73,8 @@ export interface ChessLog {
 
 export interface Settings {
   weightKg: number;
-  waterTarget: number; // glasses per day
+  units: 'metric' | 'imperial';
+  waterTarget: number; // ml per day
   notifications: boolean;
   notifAsked: boolean;
   reminders: {
@@ -83,6 +92,7 @@ export interface State {
   gymSessions: GymSession[];
   sleepLogs: SleepLog[];
   waterLogs: WaterLog[];
+  runLogs: RunLog[];
   meditationLogs: MeditationLog[];
   readingLogs: ReadingLog[];
   chessLogs: ChessLog[];

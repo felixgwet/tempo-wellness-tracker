@@ -123,6 +123,8 @@ export default function Train() {
   const avgMin = sessions.length ? Math.round(sessions.reduce((a, s) => a + s.minutes, 0) / sessions.length) : 0;
   const avgKcal = sessions.length ? Math.round(sessions.reduce((a, s) => a + s.calories, 0) / sessions.length) : 0;
   const totalKcal = sessions.reduce((a, s) => a + s.calories, 0);
+  const totalMin = sessions.reduce((a, s) => a + s.minutes, 0);
+  const totalTimeStr = totalMin >= 60 ? `${Math.floor(totalMin / 60)}h ${totalMin % 60}m` : `${totalMin}m`;
   const sessionsPerWeek = sessions.length
     ? (sessions.length / Math.max(1, (Date.now() - new Date(sessions[sessions.length - 1].dateISO + 'T12:00:00').getTime()) / (7 * 86400000))).toFixed(1)
     : '0';
@@ -272,6 +274,7 @@ export default function Train() {
         <Card><Stat label="Avg duration" value={avgMin} unit="min" /><p className="text-[11px] text-muted-foreground mt-1">per session</p></Card>
         <Card><Stat label="Avg burn" value={avgKcal} unit="kcal" accent="text-amber-600" /><p className="text-[11px] text-muted-foreground mt-1">approx, per session</p></Card>
         <Card><Stat label="Frequency" value={sessionsPerWeek} unit="/wk" accent="text-emerald-600" /><p className="text-[11px] text-muted-foreground mt-1">avg since you started</p></Card>
+        <Card className="col-span-2"><Stat label="Total time trained" value={totalTimeStr} accent="text-grad-fire" /><p className="text-[11px] text-muted-foreground mt-1">every session you've ever logged, added up</p></Card>
       </div>
 
       <Card className="mt-3">
