@@ -1,5 +1,7 @@
 # Tempo — Body & Mind
 
+![Tempo — Body & Mind](banner.png)
+
 An iPhone-first **progressive web app** that tracks gym workouts, sleep, hydration and mind habits (meditation, reading, chess) — with a motivation engine, evidence-based benefits/drawbacks coaching, and web push reminders. 100% client-side: no backend, no accounts, all data stays in `localStorage` on the user's device.
 
 **Live demo:** https://de3rngsqpkhee.kimi.page
